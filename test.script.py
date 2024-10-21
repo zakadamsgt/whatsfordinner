@@ -1,7 +1,6 @@
 import tkinter as tk
 import time
-
-from tkinter import simpledialog, messagebox
+from tkinter import simpledialog, messagebox, Scrollbar, Text
 from my_functions import get_coordinates_from_address, get_weather, get_llm_response, get_user_ingredients
 from PIL import Image, ImageTk
 
@@ -10,7 +9,6 @@ user_lat = None
 user_lng = None
 weather_info = None
 ingredients = None
-
 
 
 # Function to handle address submission
@@ -56,9 +54,12 @@ def submit_cuisine():
 
     if cuisine_choice == "local":
         # Example prompt for local recipe including ingredients
-        local_prompt = f"Please provide a local recipe for someone in {user_lat}, {user_lng}.  Recipe selection should align with geograpy and what dishes are commonly served in the area and uses {ingredients}, but do not feel the need to use all the ingredients, but stick to this list. Please consider the weather as part of the recommended recipe, being {weather_info}, meaning if it's cold outside consider a warm dish and if it's warm, a light dish.  Also for the recipe selected please provide a little context on the history of the dish.  Assume the user has an intermediate level of cooking skill and feel free to provide some unique recipes.  Diversity is a key aspect of this program"
+        local_prompt = f"Please provide a local recipe for someone in {user_lat}, {user_lng}.  Recipe selection should align with geography and what dishes are commonly served in the area and uses {ingredients}, but do not feel the need to use all the ingredients, but stick to this list. Please consider the weather as part of the recommended recipe, being {weather_info}, meaning if it's cold outside consider a warm dish and if it's warm, a light dish.  Also for the recipe selected please provide a little context on the history of the dish.  Assume the user has an intermediate level of cooking skill and feel free to provide some unique recipes.  Diversity is a key aspect of this program"
         recipe = get_llm_response(local_prompt)
-        result_label.config(text=f"Suggested Local Recipe: {recipe}")
+
+        # Insert the recipe into the result_text widget
+        result_text.delete(1.0, tk.END)  # Clear any previous text
+        result_text.insert(tk.END, f"Suggested Local Recipe: {recipe}")
 
     elif cuisine_choice == "ethnic":
         # Show the ethnic type entry field
@@ -79,14 +80,19 @@ def submit_ethnic_cuisine():
     # Example prompt for ethnic recipe
     ethnic_prompt = f"Please provide a {ethnic_type} recipe with {ingredients} , but do not feel the need to use all the ingredients, but stick to this list. Please consider the weather as part of the recommended recipe, being {weather_info}, meaning if it's cold outside consider a warm dish and if it's warm, a light dish. Also for the recipe selected please provide a little context on the history of the dish.  Assume the user has an intermediate level of cooking skill and feel free to provide some unique recipes.  Diversity is a key aspect of this program"
     recipe = get_llm_response(ethnic_prompt)
-    result_label.config(text=f"Suggested Ethnic Recipe: {recipe}")
+
+    # Insert the recipe into the result_text widget
+    result_text.delete(1.0, tk.END)  # Clear any previous text
+    result_text.insert(tk.END, f"Suggested Ethnic Recipe: {recipe}")
 
 
 # Function to prompt the user for ingredients through the GUI
 def get_user_ingredients_prompt():
     global ingredients
-    proteins = simpledialog.askstring("Proteins", "Please list the available proteins (Chicken, Fish, Beans, etc) (Comma-separated):")
-    vegetables = simpledialog.askstring("Vegetables", "Please list the available Vegetables & Fruits (Comma-separated):")
+    proteins = simpledialog.askstring("Proteins",
+                                      "Please list the available proteins (Chicken, Fish, Beans, etc) (Comma-separated):")
+    vegetables = simpledialog.askstring("Vegetables",
+                                        "Please list the available Vegetables & Fruits (Comma-separated):")
     spices = simpledialog.askstring("Spices", "Please list the available spices (Comma-separated):")
 
     if not proteins or not vegetables or not spices:
@@ -144,9 +150,17 @@ submit_ethnic_button = tk.Button(root, text="Submit Ethnic Cuisine", command=sub
 submit_ethnic_button.grid(row=2, column=2)
 submit_ethnic_button.grid_remove()  # Hide it initially
 
-# Result Label
+# Result Label with Scrollable Text Widget
 result_label = tk.Label(root, text="")
 result_label.grid(row=4, columnspan=3)
+
+# Create a Text widget with scrollbar
+result_text = Text(root, wrap='word', font=('Helvetica', 12), height=40)
+result_text.grid(row=5, columnspan=3, sticky='nsew')
+
+scrollbar = Scrollbar(root, command=result_text.yview)
+scrollbar.grid(row=5, column=3, sticky='ns')
+result_text.config(yscrollcommand=scrollbar.set)
 
 # Start the GUI event loop
 root.mainloop()
