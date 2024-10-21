@@ -17,11 +17,13 @@ The current script is functional but needs significant updates:
    git clone https://github.com/yourusername/whatsfordinner.git
    cd whatsfordinner
 
-2. Create a .env file in the project directory and include your own API keys:
+2. Create a `.env` file in the project directory and include your own API keys:
 
-OPENAI_API_KEY=your_openai_api_key
-OPENCAGE_API_KEY=your_opencage_api_key
-OPENWEATHER_API_KEY=your_openweather_api_key
+   ```bash
+   OPENAI_API_KEY=your_openai_api_key
+   OPENCAGE_API_KEY=your_opencage_api_key
+   OPENWEATHER_API_KEY=your_openweather_api_key
+
 
 3. Run the application to get recipe suggestions based on your inputs.
 
