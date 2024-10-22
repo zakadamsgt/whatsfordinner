@@ -19,6 +19,12 @@ def submit_address():
         messagebox.showerror("Input Error", "Please enter an address.")
         return
 
+        # Run the address processing in a separate thread
+        threading.Thread(target=process_address, args=(address,)).start()
+
+    def process_address(address):
+        global user_lat, user_lng, weather_info
+
     # Get coordinates and weather data
     try:
         user_lat, user_lng = get_coordinates_from_address(address)
@@ -29,7 +35,21 @@ def submit_address():
         temp, weather_description = get_weather(user_lat, user_lng)
         weather_info = f"{temp:.2f}°C and {weather_description}"
 
-        messagebox.showinfo("Weather Info", f"Weather at your location: {weather_info}")
+        #messagebox.showinfo("Weather Info", f"Weather at your location: {weather_info}")
+
+        # Use `tkinter` methods to update the GUI #NEW
+        root.after(0, lambda: messagebox.showinfo("Weather Info", f"Weather at your location: {weather_info}"))
+
+        # Show the cuisine selection after getting the address
+        root.after(0, lambda: [
+            cuisine_label.grid(),
+            cuisine_option.grid(),
+            submit_cuisine_button.grid()
+        ])
+
+    except Exception as e:
+        root.after(0, lambda: messagebox.showerror("Error", str(e)))
+
 
         # Show the cuisine selection after getting the address
         cuisine_label.grid()
