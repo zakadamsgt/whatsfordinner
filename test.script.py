@@ -1,7 +1,7 @@
 import tkinter as tk
-import time
+import threading
 from tkinter import simpledialog, messagebox, Scrollbar, Text
-from my_functions import get_coordinates_from_address, get_weather, get_llm_response, get_user_ingredients
+from my_functions import get_coordinates_from_address, get_weather, get_llm_response, get_user_ingredients, cooking_skill
 from PIL import Image, ImageTk
 
 # Define global variables to store user inputs
@@ -9,7 +9,7 @@ user_lat = None
 user_lng = None
 weather_info = None
 ingredients = None
-
+skill = None
 
 # Function to handle address submission
 def submit_address():
@@ -19,11 +19,11 @@ def submit_address():
         messagebox.showerror("Input Error", "Please enter an address.")
         return
 
-        # Run the address processing in a separate thread
-        threading.Thread(target=process_address, args=(address,)).start()
+    # Run the address processing in a separate thread
+    threading.Thread(target=process_address, args=(address,)).start()
 
-    def process_address(address):
-        global user_lat, user_lng, weather_info
+def process_address(address):
+    global user_lat, user_lng, weather_info
 
     # Get coordinates and weather data
     try:
@@ -35,9 +35,7 @@ def submit_address():
         temp, weather_description = get_weather(user_lat, user_lng)
         weather_info = f"{temp:.2f}°C and {weather_description}"
 
-        #messagebox.showinfo("Weather Info", f"Weather at your location: {weather_info}")
-
-        # Use `tkinter` methods to update the GUI #NEW
+        # Use `tkinter` methods to update the GUI
         root.after(0, lambda: messagebox.showinfo("Weather Info", f"Weather at your location: {weather_info}"))
 
         # Show the cuisine selection after getting the address
@@ -50,19 +48,9 @@ def submit_address():
     except Exception as e:
         root.after(0, lambda: messagebox.showerror("Error", str(e)))
 
-
-        # Show the cuisine selection after getting the address
-        cuisine_label.grid()
-        cuisine_option.grid()
-        submit_cuisine_button.grid()
-
-    except Exception as e:
-        messagebox.showerror("Error", str(e))
-
-
-# Function to handle cuisine submission
+# Move this function outside of submit_address()
 def submit_cuisine():
-    global ingredients
+    global ingredients, skill_options  # Include skill_options
     cuisine_choice = cuisine_var.get()
 
     if not cuisine_choice:
@@ -73,8 +61,16 @@ def submit_cuisine():
     ingredients = get_user_ingredients_prompt()
 
     if cuisine_choice == "local":
-        # Example prompt for local recipe including ingredients
-        local_prompt = f"Please provide a local recipe for someone in {user_lat}, {user_lng}.  Recipe selection should align with geography and what dishes are commonly served in the area and uses {ingredients}, but do not feel the need to use all the ingredients, but stick to this list. Please consider the weather as part of the recommended recipe, being {weather_info}, meaning if it's cold outside consider a warm dish and if it's warm, a light dish.  Also for the recipe selected please provide a little context on the history of the dish.  Assume the user has an intermediate level of cooking skill and feel free to provide some unique recipes.  Diversity is a key aspect of this program"
+        # Fetch cooking skill before generating the prompt
+        skill = skill_var.get()  # Make sure to fetch the cooking skill from the radio buttons
+
+        if not skill:
+            messagebox.showerror("Input Error", "Please select a cooking skill level.")
+            return
+
+        # Local cuisine LLM prompt, including the selected skill
+        local_prompt = f"Please provide a local recipe for someone in {user_lat}, {user_lng}. Recipe selection should align with geography and what dishes are commonly served in the area and use {ingredients}, but do not feel the need to use all the ingredients. Please consider the weather as part of the recommended recipe, which is {weather_info}. Also, assume the user has a {skill} level of cooking skill, and feel free to provide some unique and diverse recipes. Provide some context on the history of the dish."
+
         recipe = get_llm_response(local_prompt)
 
         # Insert the recipe into the result_text widget
@@ -87,24 +83,32 @@ def submit_cuisine():
         ethnic_entry.grid()
         submit_ethnic_button.grid()
 
-
 # Function to handle ethnic cuisine submission
 def submit_ethnic_cuisine():
-    global ingredients
+    global ingredients, skill  # Include skill as a global variable
+
+    # Get the selected ethnic type
     ethnic_type = ethnic_entry.get()
 
     if not ethnic_type:
         messagebox.showerror("Input Error", "Please enter a type of ethnic cuisine.")
         return
 
-    # Example prompt for ethnic recipe
-    ethnic_prompt = f"Please provide a {ethnic_type} recipe with {ingredients} , but do not feel the need to use all the ingredients, but stick to this list. Please consider the weather as part of the recommended recipe, being {weather_info}, meaning if it's cold outside consider a warm dish and if it's warm, a light dish. Also for the recipe selected please provide a little context on the history of the dish.  Assume the user has an intermediate level of cooking skill and feel free to provide some unique recipes.  Diversity is a key aspect of this program"
+    # Get the user's selected cooking skill
+    skill = skill_var.get()  # Fetch the selected cooking skill from the radio buttons
+
+    if not skill:
+        messagebox.showerror("Input Error", "Please select a cooking skill level.")
+        return
+
+    # Ethnic cuisine LLM prompt, including the selected skill
+    ethnic_prompt = f"Please provide an ethnic recipe for {ethnic_type} cuisine. Use {ingredients}, but do not feel the need to use all the ingredients. Provide an {skill}-level recipe. Include some context or history of the dish, and make the recipe interesting."
+
     recipe = get_llm_response(ethnic_prompt)
 
     # Insert the recipe into the result_text widget
     result_text.delete(1.0, tk.END)  # Clear any previous text
-    result_text.insert(tk.END, f"Suggested Ethnic Recipe: {recipe}")
-
+    result_text.insert(tk.END, f"Suggested {ethnic_type.capitalize()} Recipe: {recipe}")
 
 # Function to prompt the user for ingredients through the GUI
 def get_user_ingredients_prompt():
@@ -127,7 +131,6 @@ def get_user_ingredients_prompt():
     }
 
     return ingredients
-
 
 # GUI Setup
 root = tk.Tk()
@@ -169,6 +172,23 @@ ethnic_entry.grid_remove()  # Hide it initially
 submit_ethnic_button = tk.Button(root, text="Submit Ethnic Cuisine", command=submit_ethnic_cuisine)
 submit_ethnic_button.grid(row=2, column=2)
 submit_ethnic_button.grid_remove()  # Hide it initially
+
+# Define a StringVar for skill selection
+skill_var = tk.StringVar()  # This will hold the selected cooking skill
+
+# Cooking Skill selection
+skill_label = tk.Label(root, text="Select Your Cooking Skill Level:")
+skill_label.grid(row=3, column=0, columnspan=2)  # Adjust the row and column as needed
+
+# Radio buttons for cooking skill levels
+beginner_radio = tk.Radiobutton(root, text="Beginner", variable=skill_var, value="beginner")
+beginner_radio.grid(row=4, column=0)
+
+intermediate_radio = tk.Radiobutton(root, text="Intermediate", variable=skill_var, value="intermediate")
+intermediate_radio.grid(row=4, column=1)
+
+advanced_radio = tk.Radiobutton(root, text="Advanced", variable=skill_var, value="advanced")
+advanced_radio.grid(row=4, column=2)
 
 # Result Label with Scrollable Text Widget
 result_label = tk.Label(root, text="")

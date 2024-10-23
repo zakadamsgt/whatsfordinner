@@ -91,3 +91,11 @@ def get_user_ingredients():
 
     return ingredients
 
+def cooking_skill():
+    skill_levels = ("beginner", "intermediate", "advanced")
+    skill = input("Please select your cooking skill level (beginner, intermediate, advanced): ")
+
+    while skill not in skill_levels:
+        skill = input(f"Invalid input. Please select from {skill_levels}: ")
+
+    return skill
