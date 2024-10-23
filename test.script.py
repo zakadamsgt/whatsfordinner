@@ -11,6 +11,40 @@ weather_info = None
 ingredients = None
 skill = None
 
+
+def splash_screen():
+    splash = tk.Tk()  # Create a new window for the splash screen
+
+    # Load the image
+    img = Image.open("homescreen.jpg")
+    splash_img = ImageTk.PhotoImage(img)
+
+    # Get the dimensions of the image
+    width, height = img.size
+
+    # Create a label to display the image
+    label = tk.Label(splash, image=splash_img)
+    label.pack()
+
+    # Set the dimensions of the splash screen window
+    splash.geometry(f"{width}x{height}")  # Adjust the window size to the image size
+
+    # Center the splash screen
+    screen_width = splash.winfo_screenwidth()  # Get the width of the screen
+    screen_height = splash.winfo_screenheight()  # Get the height of the screen
+    x = (screen_width // 2) - (width // 2)  # Calculate the x position
+    y = (screen_height // 2) - (height // 2)  # Calculate the y position
+    splash.geometry(f"{width}x{height}+{x}+{y}")  # Set the geometry to include position
+
+    # Schedule the splash screen to close after 5 seconds
+    splash.after(5000, splash.destroy)  # Destroy the splash screen after 5000 ms (5 seconds)
+
+    # Start the splash screen event loop
+    splash.mainloop()  # Run the splash screen's event loop
+
+# Call the splash screen function before the main GUI
+splash_screen()
+
 # Function to handle address submission
 def submit_address():
     global user_lat, user_lng, weather_info
