@@ -8,7 +8,7 @@ This application allows you to input your available ingredients and location. It
 ## Current Status
 The current script is functional but needs significant updates:
 - Improved formatting for LLM responses
-- A splash screen using the `homescreen.jpg` as a background
+- Nutrional calculation per serving
 - Ability to save generated recipes into a project folder
 
 ## Setup Instructions
